@@ -1257,6 +1257,39 @@ nv.utils.renderWatch = function(dispatch, duration) {
 
 }
 
+// Chart state utility
+nv.utils.state = function(){
+  if (!(this instanceof nv.utils.state))
+    return new nv.utils.state();
+  var state = {};
+
+  this.dispatch = d3.dispatch('change', 'set');
+
+  // This function needs to be overridden
+  // by model-specific state-getter
+  this.get = function(){
+    return {};
+  }
+
+  var _set = function(){
+    var settings = this.get();
+    if (JSON.stringify(settings) === JSON.stringify(state))
+      return false;
+    for (var key in settings) {
+      if (state[key] === undefined) state[key] = {};
+      state[key] = settings[key];
+      changed = true;
+    }
+    return true;
+  }
+
+  this.update = function(){
+    if (_set.call(this))
+      this.dispatch.change(state);
+  }
+
+}
+
 /*
 Snippet of code you can insert into each nv.models.* to give you the ability to
 do things like:
@@ -3612,7 +3645,6 @@ nv.models.multiBar = function() {
       , renderWatch = nv.utils.renderWatch(dispatch, duration)
       ;
 
-
   //============================================================
 
   function chart(selection) {
@@ -3631,7 +3663,6 @@ nv.models.multiBar = function() {
           return true;
         return false;
       }
-
 
       if(hideable && data.length) hideable = [{
         values: data[0].values.map(function(d) {
@@ -3665,11 +3696,10 @@ nv.models.multiBar = function() {
           data.map(function(d) {
             var f = d.values[i];
             f.size = Math.abs(f.y);
-            if (f.y<0)  {
+            if ( f.y < 0 )  {
               f.y1 = negBase;
               negBase = negBase - f.size;
-            } else
-            {
+            } else {
               f.y1 = f.size + posBase;
               posBase = posBase + f.size;
             }
@@ -3688,11 +3718,11 @@ nv.models.multiBar = function() {
             });
 
       x.domain(xDomain || d3.merge(seriesData).map(function(d) { return d.x }))
-          .rangeBands(xRange || [0, availableWidth], groupSpacing);
+        .rangeBands(xRange || [0, availableWidth], groupSpacing);
 
       //y.domain(yDomain || d3.extent(d3.merge(seriesData).map(function(d) { return d.y + (stacked ? d.y1 : 0) }).concat(forceY)))
       y.domain(yDomain || d3.extent(d3.merge(seriesData).map(function(d) { return stacked ? (d.y > 0 ? d.y1 : d.y1 + d.y ) : d.y }).concat(forceY)))
-          .range(yRange || [availableHeight, 0]);
+        .range(yRange || [availableHeight, 0]);
 
       // If scale's domain don't have a range, slightly adjust to make one... so a chart can show a single data point
       if (x.domain()[0] === x.domain()[1])
@@ -3759,9 +3789,7 @@ nv.models.multiBar = function() {
 
       var barsEnter = bars.enter().append('rect')
           .attr('class', function(d,i) { return getY(d,i) < 0 ? 'nv-bar negative' : 'nv-bar positive'})
-          .attr('x', function(d,i,j) {
-              return stacked ? 0 : (j * x.rangeBand() / data.length )
-          })
+          .attr('x', function(d,i,j) { return stacked ? 0 : (j * x.rangeBand() / data.length ) })
           .attr('y', function(d) { return y0(stacked ? d.y0 : 0) })
           .attr('height', 0)
           .attr('width', x.rangeBand() / (stacked ? 1 : data.length) )
@@ -3825,19 +3853,19 @@ nv.models.multiBar = function() {
           });
       if (stacked)
           barSelection
-            .attr('y', function(d,i) {
+            .attr('y', function(d) {
               return y((stacked ? d.y1 : 0));
             })
-            .attr('height', function(d,i) {
+            .attr('height', function(d) {
               return Math.max(Math.abs(y(d.y + (stacked ? d.y0 : 0)) - y((stacked ? d.y0 : 0))),1);
             })
-            .attr('x', function(d,i) {
+            .attr('x', function(d) {
               return stacked ? 0 : (d.series * x.rangeBand() / data.length )
             })
             .attr('width', x.rangeBand() / (stacked ? 1 : data.length) );
       else
           barSelection
-            .attr('x', function(d,i) {
+            .attr('x', function(d) {
               return d.series * x.rangeBand() / data.length
             })
             .attr('width', x.rangeBand() / data.length)
@@ -4008,9 +4036,7 @@ nv.models.multiBar = function() {
     duration = _;
     renderWatch.reset(duration);
     return chart;
-  }
-
-
+  };
 
   //============================================================
   // Deprecated Methods
@@ -4060,13 +4086,13 @@ nv.models.multiBarChart = function() {
       }
     , x //can be accessed via chart.xScale()
     , y //can be accessed via chart.yScale()
-    , state = { stacked: false }
+    , state = nv.utils.state()
     , defaultState = null
     , dispatch = d3.dispatch('tooltipShow', 'tooltipHide', 'stateChange', 'changeState', 'renderEnd')
     , controlWidth = function() { return showControls ? 180 : 0 }
     , duration = 250
-
     ;
+    state.stacked = false // DEPRECATED Maintained for backward compatibility
 
   multibar
     .stacked(false)
@@ -4083,7 +4109,7 @@ nv.models.multiBarChart = function() {
     .tickFormat(d3.format(',.1f'))
     ;
 
-  controls.updateState(false);
+  controls.updateState(false); // DEPRECATED
   //============================================================
 
 
@@ -4091,6 +4117,7 @@ nv.models.multiBarChart = function() {
   // Private Variables
   //------------------------------------------------------------
   var renderWatch = nv.utils.renderWatch(dispatch);
+  var stacked = false;
 
   var showTooltip = function(e, offsetElement) {
     var left = e.pos[0] + ( offsetElement.offsetLeft || 0 ),
@@ -4102,6 +4129,15 @@ nv.models.multiBarChart = function() {
     nv.tooltip.show([left, top], content, e.value < 0 ? 'n' : 's', null, offsetElement);
   };
 
+  var stateGetter = function(data) {
+    return function(){
+      return {
+        active: data.map(function(d) { return !d.disabled }),
+        stacked: stacked
+      }
+    }
+  }
+
   //============================================================
 
   function chart(selection) {
@@ -4111,6 +4147,9 @@ nv.models.multiBarChart = function() {
     if (showYAxis) renderWatch.models(yAxis);
 
     selection.each(function(data) {
+
+      state.get = stateGetter(data);
+      state.update();
 
       canvas.setRoot(this);
       if (canvas.noData(data))
@@ -4122,27 +4161,16 @@ nv.models.multiBarChart = function() {
 
       chart.update = function() {
         if (duration === 0)
-          container.call(chart);
+          canvas.svg.call(chart);
         else
-          container.transition()
+          canvas.svg.transition()
             .duration(duration)
             .call(chart);
       };
       chart.container = this;
 
-      //set state.disabled
+      // DEPRECATED set state.disabled
       state.disabled = data.map(function(d) { return !!d.disabled });
-
-      if (!defaultState) {
-        var key;
-        defaultState = {};
-        for (key in state) {
-          if (state[key] instanceof Array)
-            defaultState[key] = state[key].slice(0);
-          else
-            defaultState[key] = state[key];
-        }
-      }
 
       //------------------------------------------------------------
       // Setup Scales
@@ -4191,6 +4219,9 @@ nv.models.multiBarChart = function() {
         canvas.g.select('.nv-legendWrap')
           .attr('transform', 'translate(' + controlWidth() + ',' + (-canvas.margin.top) +')');
       }
+
+      //------------------------------------------------------------
+
 
       //------------------------------------------------------------
       // Controls
@@ -4302,7 +4333,6 @@ nv.models.multiBarChart = function() {
             .ticks( availableHeight / 36 )
             .tickSize( -availableWidth, 0);
 
-
           canvas.g.select('.nv-y.nv-axis').transition()
               .call(yAxis);
       }
@@ -4315,11 +4345,8 @@ nv.models.multiBarChart = function() {
       // Event Handling/Dispatching (in chart's scope)
       //------------------------------------------------------------
 
-      legend
-        .dispatch.on('stateChange', function(newState) {
-          state = newState;
-          dispatch.stateChange(state);
-          chart.update();
+      legend.dispatch.on('legendClick', function(d, i) {
+        chart.update();
       });
 
       controls.dispatch.on('legendClick', function(d) {
@@ -4332,15 +4359,19 @@ nv.models.multiBarChart = function() {
 
         switch (d.key) {
           case 'Grouped':
+            stacked = false;
             multibar.stacked(false);
             break;
           case 'Stacked':
+            stacked = true;
             multibar.stacked(true);
             break;
         }
 
+        // DEPRECATED
         state.stacked = multibar.stacked();
         dispatch.stateChange(state);
+        // END DEPRECATED
 
         chart.update();
       });
@@ -4349,6 +4380,7 @@ nv.models.multiBarChart = function() {
         if (tooltips) showTooltip(e, that.parentNode)
       });
 
+      // DEPRECATED
       // Update chart from a state object passed to event handler
       dispatch.on('changeState', function(e) {
 
@@ -4363,9 +4395,24 @@ nv.models.multiBarChart = function() {
         if (typeof e.stacked !== 'undefined') {
           multibar.stacked(e.stacked);
           state.stacked = e.stacked;
+          stacked = e.stacked;
         }
 
         chart.update();
+      });
+      // END DEPRECATED
+
+      state.dispatch.on('set', function(e){
+        if (e.active !== undefined)
+          data.forEach(function(series,i) {
+            series.disabled = !e.active[i];
+          });
+
+        if (e.stacked !== undefined)
+          multibar.stacked(e.stacked);
+
+        chart.update();
+
       });
 
       //============================================================
@@ -4395,7 +4442,6 @@ nv.models.multiBarChart = function() {
     if (tooltips) nv.tooltip.cleanup();
   });
 
-
   //============================================================
 
 
@@ -4409,6 +4455,9 @@ nv.models.multiBarChart = function() {
   chart.legend = legend;
   chart.xAxis = xAxis;
   chart.yAxis = yAxis;
+  // DO NOT DELETE. This is currently overridden below
+  // until deprecated portions are removed.
+  chart.state = state;
 
   d3.rebind(chart, multibar, 'x', 'y', 'xDomain', 'yDomain', 'xRange', 'yRange', 'forceX', 'forceY', 'clipEdge',
    'id', 'stacked', 'stackOffset', 'delay', 'barColor','groupSpacing');
@@ -4437,7 +4486,6 @@ nv.models.multiBarChart = function() {
   };
 
   chart.color = function(_) {
-
     if (!arguments.length) return color;
     color = nv.utils.getColor(_);
     legend.color(color);
@@ -4511,11 +4559,17 @@ nv.models.multiBarChart = function() {
     return chart;
   };
 
+  // DEPRECATED
   chart.state = function(_) {
+    nv.deprecated('multiBarChart.state');
     if (!arguments.length) return state;
     state = _;
     return chart;
   };
+  for (var key in state) {
+    chart.state[key] = state[key];
+  }
+  // END DEPRECATED
 
   chart.defaultState = function(_) {
     if (!arguments.length) return defaultState;
@@ -4542,7 +4596,7 @@ nv.models.multiBarChart = function() {
     yAxis.duration(duration);
     renderWatch.reset(duration);
     return chart;
-  }
+  };
 
   //============================================================
 
@@ -7467,40 +7521,39 @@ nv.models.indentedTree = function() {
             dispatch.legendMouseout(d,i);
           })
           .on('click', function(d,i) {
-            dispatch.legendClick(d,i);
             if (updateState) {
-               if (radioButtonMode) {
-                   //Radio button mode: set every series to disabled,
-                   //  and enable the clicked series.
-                   data.forEach(function(series) { series.disabled = true});
-                   d.disabled = false;
-               }
-               else {
-                   d.disabled = !d.disabled;
-                   if (data.every(function(series) { return series.disabled})) {
-                       //the default behavior of NVD3 legends is, if every single series
-                       // is disabled, turn all series' back on.
-                       data.forEach(function(series) { series.disabled = false});
-                   }
-               }
-               dispatch.stateChange({
-                  disabled: data.map(function(d) { return !!d.disabled })
-               });
+               // Radio button mode: set every series to disabled,
+              // and enable the clicked series.
+              if (radioButtonMode) {
+                data.forEach(function(series) { series.disabled = true });
+                d.disabled = false;
+              }
+              // If every single series is disabled, turn all series' back on.
+              else {
+                d.disabled = !d.disabled;
+                if (data.every(function(series) { return series.disabled}))
+                  data.forEach(function(series) { series.disabled = false});
+              }
+              dispatch.stateChange({
+                disabled: data.map(function(d) { return !!d.disabled })
+              });
             }
+            dispatch.legendClick(d,i);
           })
           .on('dblclick', function(d,i) {
-            dispatch.legendDblclick(d,i);
+
             if (updateState) {
-                //the default behavior of NVD3 legends, when double clicking one,
-                // is to set all other series' to false, and make the double clicked series enabled.
-                data.forEach(function(series) {
-                   series.disabled = true;
-                });
-                d.disabled = false;
-                dispatch.stateChange({
-                    disabled: data.map(function(d) { return !!d.disabled })
-                });
+              // When double clicking one, all other series' are set to false,
+              // and make the double clicked series enabled.
+              data.forEach(function(series) {
+                series.disabled = true;
+              });
+              d.disabled = false;
+              dispatch.stateChange({
+                disabled: data.map(function(d) { return !!d.disabled })
+              });
             }
+            dispatch.legendDblclick(d,i);
           });
 
       seriesEnter.append('circle')
@@ -8660,8 +8713,14 @@ nv.models.line = function() {
   // Expose Public Variables
   //------------------------------------------------------------
 
-  chart.dispatch = scatter.dispatch;
+  chart.dispatch = dispatch;
   chart.scatter = scatter;
+  // Pass through scatter dispatch events,
+  // required for renderWatch to dispatch properly
+  scatter.dispatch.on('elementClick', function(){ dispatch.elementClick.apply(this, arguments); })
+  scatter.dispatch.on('elementMouseover', function(){ dispatch.elementMouseover.apply(this, arguments); })
+  scatter.dispatch.on('elementMouseout', function(){ dispatch.elementMouseout.apply(this, arguments); })
+
 
   d3.rebind(chart, scatter, 'id', 'interactive', 'size', 'xScale', 'yScale', 'zScale', 'xDomain', 'yDomain', 'xRange', 'yRange',
     'sizeDomain', 'forceX', 'forceY', 'forceSize', 'clipVoronoi', 'useVoronoi', 'clipRadius', 'padData','highlightPoint','clearHighlights');
@@ -8828,7 +8887,7 @@ nv.models.lineChart = function() {
       chart.update = function() {
         canvas.svg
           .transition()
-          .duration(transitionDuration)
+          .duration(duration)
           .call(chart)
       };
 
