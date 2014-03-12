@@ -214,6 +214,39 @@ nv.utils.renderWatch = function(dispatch, duration) {
 
 }
 
+// Chart state utility
+nv.utils.state = function(){
+  if (!(this instanceof nv.utils.state))
+    return new nv.utils.state();
+  var state = {};
+
+  this.dispatch = d3.dispatch('change', 'set');
+
+  // This function needs to be overridden
+  // by model-specific state-getter
+  this.get = function(){
+    return {};
+  }
+
+  var _set = function(){
+    var settings = this.get();
+    if (JSON.stringify(settings) === JSON.stringify(state))
+      return false;
+    for (var key in settings) {
+      if (state[key] === undefined) state[key] = {};
+      state[key] = settings[key];
+      changed = true;
+    }
+    return true;
+  }
+
+  this.update = function(){
+    if (_set.call(this))
+      this.dispatch.change(state);
+  }
+
+}
+
 /*
 Snippet of code you can insert into each nv.models.* to give you the ability to
 do things like:
