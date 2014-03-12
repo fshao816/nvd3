@@ -8793,6 +8793,11 @@ nv.models.line = function() {
     return chart;
   };
 
+  chart.transitionDuration = function(_) {
+    nv.deprecated('line.transitionDuration');
+    return chart.duration(_);
+  };
+
   chart.duration = function(_) {
     if (!arguments.length) return duration;
     duration = _;
@@ -9108,7 +9113,7 @@ nv.models.lineChart = function() {
   chart.interactiveLayer = interactiveLayer;
 
   d3.rebind(chart, lines, 'defined', 'isArea', 'x', 'y', 'size', 'xScale', 'yScale', 'xDomain', 'yDomain', 'xRange', 'yRange'
-    , 'forceX', 'forceY', 'interactive', 'clipEdge', 'clipVoronoi', 'useVoronoi','id', 'interpolate', 'showLegend');
+    , 'forceX', 'forceY', 'interactive', 'clipEdge', 'clipVoronoi', 'useVoronoi','id', 'interpolate');
 
   chart.options = nv.utils.optionsFunc.bind(chart);
 
@@ -9197,6 +9202,13 @@ nv.models.lineChart = function() {
     if (!arguments.length) return canvas.noData;
     canvas.noData = _;
     return chart;
+  };
+
+  chart.showLegend = canvas.showLegend
+
+  chart.transitionDuration = function(_) {
+    nv.deprecated('lineChart.transitionDuration');
+    return chart.duration(_);
   };
 
   chart.duration = function(_) {

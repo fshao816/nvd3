@@ -255,6 +255,11 @@ nv.models.line = function() {
     return chart;
   };
 
+  chart.transitionDuration = function(_) {
+    nv.deprecated('line.transitionDuration');
+    return chart.duration(_);
+  };
+
   chart.duration = function(_) {
     if (!arguments.length) return duration;
     duration = _;
