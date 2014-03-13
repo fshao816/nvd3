@@ -325,6 +325,19 @@ nv.models.multiBarChart = function() {
         if (tooltips) showTooltip(e, that.parentNode)
       });
 
+      state.dispatch.on('set', function(e){
+        if (e.stacked !== undefined) {
+          multibar.stacked(e.stacked);
+          stacked = e.stacked;
+        }
+        if (e.active !== undefined) {
+          data.forEach(function(series, i){
+            series.disabled = !e.active[i];
+          });
+        }
+        chart.update();
+      });
+
       // DEPRECATED
       // Update chart from a state object passed to event handler
       dispatch.on('changeState', function(e) {
