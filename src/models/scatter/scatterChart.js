@@ -554,6 +554,12 @@ nv.models.scatterChart = function() {
   chart.duration = function(_) {
     if (!arguments.length) return duration;
     duration = _;
+    renderWatch.reset(duration);
+    scatter.duration(duration);
+    xAxis.duration(duration);
+    yAxis.duration(duration);
+    distX.duration(duration);
+    distY.duration(duration);
     return chart;
   };
 
