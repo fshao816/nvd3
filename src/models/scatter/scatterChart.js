@@ -114,7 +114,7 @@ nv.models.scatterChart = function() {
       var that = this;
 
 
-      chart.update = function() { canvas.svg.transition().duration(transitionDuration).call(chart); };
+      chart.update = function() { canvas.svg.transition().duration(duration).call(chart); };
       chart.container = this;
 
       //set state.disabled
@@ -459,8 +459,8 @@ nv.models.scatterChart = function() {
   };
 
   chart.showLegend = function(_) {
-    if (!arguments.length) return showLegend;
-    showLegend = _;
+    if (!arguments.length) return canvas.showLegend.call(canvas);
+    canvas.showLegend.call(canvas, _);
     return chart;
   };
 
@@ -544,9 +544,16 @@ nv.models.scatterChart = function() {
     return chart;
   };
 
+  // DEPRECATED
   chart.transitionDuration = function(_) {
-    if (!arguments.length) return transitionDuration;
-    transitionDuration = _;
+    nv.deprecated('scatterChart.transitionDuration');
+    return chart.duration(_);
+  };
+  // END DEPRECATED
+
+  chart.duration = function(_) {
+    if (!arguments.length) return duration;
+    duration = _;
     return chart;
   };
 
