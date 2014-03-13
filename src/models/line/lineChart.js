@@ -394,7 +394,11 @@ nv.models.lineChart = function() {
     return chart;
   };
 
-  chart.showLegend = canvas.showLegend
+  chart.showLegend = function(_) {
+    if (!arguments.length) return canvas.showLegend.call(canvas);
+    canvas.showLegend.call(canvas, _);
+    return chart;
+  };
 
   chart.transitionDuration = function(_) {
     nv.deprecated('lineChart.transitionDuration');

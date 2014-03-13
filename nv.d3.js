@@ -9217,7 +9217,11 @@ nv.models.lineChart = function() {
     return chart;
   };
 
-  chart.showLegend = canvas.showLegend
+  chart.showLegend = function(_) {
+    if (!arguments.length) return canvas.showLegend.call(canvas);
+    canvas.showLegend.call(canvas, _);
+    return chart;
+  };
 
   chart.transitionDuration = function(_) {
     nv.deprecated('lineChart.transitionDuration');
@@ -14299,6 +14303,12 @@ nv.models.scatterChart = function() {
   chart.duration = function(_) {
     if (!arguments.length) return duration;
     duration = _;
+    renderWatch.reset(duration);
+    scatter.duration(duration);
+    xAxis.duration(duration);
+    yAxis.duration(duration);
+    distX.duration(duration);
+    distY.duration(duration);
     return chart;
   };
 
