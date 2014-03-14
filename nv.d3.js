@@ -1223,8 +1223,8 @@ nv.utils.renderWatch = function(dispatch, duration) {
     if (duration === 0)
     {
       selection.__rendered = true;
-      selection.delay = function(){console.warn('`delay` not specified for selection.'); return this;}
-      selection.duration = function(){console.warn('`duration` not specified for selection.'); return this;}
+      selection.delay = function(){return this;}
+      selection.duration = function(){return this;}
       return selection;
     }
     else
@@ -1262,18 +1262,30 @@ nv.utils.state = function(){
   if (!(this instanceof nv.utils.state))
     return new nv.utils.state();
   var state = {};
+  var _self = this;
+  var _setState = function(){ return;};
+  var _getState = function(){ return {};};
+
   init = null;
 
   this.dispatch = d3.dispatch('change', 'set');
 
-  // This function needs to be overridden
-  // by model-specific state-getter
-  this.get = function(){
-    return {};
+  this.dispatch.on('set', function(state){
+    _setState(state, true);
+  });
+
+  this.getter = function(fn){
+    _getState = fn;
+    return this;
   }
 
-  this.set = function(state){
-    return;
+  this.setter = function(fn, callback) {
+    if (!callback) callback = function(){};
+    _setState = function(state, update){
+      fn(state);
+      if (update) callback();
+    }
+    return this;
   }
 
   this.init = function(state){
@@ -1281,7 +1293,7 @@ nv.utils.state = function(){
   }
 
   var _set = function(){
-    var settings = this.get();
+    var settings = _getState();
     if (JSON.stringify(settings) === JSON.stringify(state))
       return false;
     for (var key in settings) {
@@ -1294,7 +1306,7 @@ nv.utils.state = function(){
 
   this.update = function(){
     if (init) {
-      this.set(init);
+      _setState(init, false);
       init = null;
     }
     if (_set.call(this))
@@ -4171,10 +4183,6 @@ nv.models.multiBarChart = function() {
 
     selection.each(function(data) {
 
-      state.set = stateSetter(data);
-      state.get = stateGetter(data);
-      state.update();
-
       canvas.setRoot(this);
       if (canvas.noData(data))
           return chart;
@@ -4192,6 +4200,11 @@ nv.models.multiBarChart = function() {
             .call(chart);
       };
       chart.container = this;
+
+      state
+        .setter(stateSetter(data), chart.update)
+        .getter(stateGetter(data))
+        .update();
 
       // DEPRECATED set state.disabled
       state.disabled = data.map(function(d) { return !!d.disabled });
@@ -4403,19 +4416,6 @@ nv.models.multiBarChart = function() {
 
       dispatch.on('tooltipShow', function(e) {
         if (tooltips) showTooltip(e, that.parentNode)
-      });
-
-      state.dispatch.on('set', function(e){
-        if (e.stacked !== undefined) {
-          multibar.stacked(e.stacked);
-          stacked = e.stacked;
-        }
-        if (e.active !== undefined) {
-          data.forEach(function(series, i){
-            series.disabled = !e.active[i];
-          });
-        }
-        chart.update();
       });
 
       // DEPRECATED
