@@ -219,6 +219,7 @@ nv.utils.state = function(){
   if (!(this instanceof nv.utils.state))
     return new nv.utils.state();
   var state = {};
+  init = null;
 
   this.dispatch = d3.dispatch('change', 'set');
 
@@ -226,6 +227,14 @@ nv.utils.state = function(){
   // by model-specific state-getter
   this.get = function(){
     return {};
+  }
+
+  this.set = function(state){
+    return;
+  }
+
+  this.init = function(state){
+    init = state;
   }
 
   var _set = function(){
@@ -241,6 +250,10 @@ nv.utils.state = function(){
   }
 
   this.update = function(){
+    if (init) {
+      this.set(init);
+      init = null;
+    }
     if (_set.call(this))
       this.dispatch.change(state);
   }

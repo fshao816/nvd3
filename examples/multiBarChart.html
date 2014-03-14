@@ -88,6 +88,11 @@ nv.addGraph(function() {
     chart.yAxis
         .tickFormat(d3.format(',.1f'));
 
+    chart.state.init({
+      stacked: true,
+      active: [1,1,0]
+    });
+
     chart.dispatch.on('renderEnd', function(){
         console.log('rendered');
     });
@@ -104,12 +109,12 @@ nv.addGraph(function() {
 
     chart.dispatch.on('stateChange', function(e) { nv.log('New State:', JSON.stringify(e)); });
 
-    setTimeout(function(){
-      chart.state.dispatch.set({
-        stacked: true,
-        active: [1,1,0]
-      })
-    }, 1000)
+    // setTimeout(function(){
+    //   chart.state.dispatch.set({
+    //     stacked: true,
+    //     active: [1,1,0]
+    //   })
+    // }, 1000)
 
     return chart;
 });
