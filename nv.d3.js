@@ -1262,6 +1262,7 @@ nv.utils.state = function(){
   if (!(this instanceof nv.utils.state))
     return new nv.utils.state();
   var state = {};
+  init = null;
 
   this.dispatch = d3.dispatch('change', 'set');
 
@@ -1269,6 +1270,14 @@ nv.utils.state = function(){
   // by model-specific state-getter
   this.get = function(){
     return {};
+  }
+
+  this.set = function(state){
+    return;
+  }
+
+  this.init = function(state){
+    init = state;
   }
 
   var _set = function(){
@@ -1284,6 +1293,10 @@ nv.utils.state = function(){
   }
 
   this.update = function(){
+    if (init) {
+      this.set(init);
+      init = null;
+    }
     if (_set.call(this))
       this.dispatch.change(state);
   }
@@ -4137,6 +4150,16 @@ nv.models.multiBarChart = function() {
       }
     }
   }
+  var stateSetter = function(data) {
+    return function(state) {
+      if (state.stacked !== undefined)
+        stacked = state.stacked;
+      if (state.active !== undefined)
+        data.forEach(function(series,i) {
+          series.disabled = !state.active[i];
+        });
+    }
+  }
 
   //============================================================
 
@@ -4148,6 +4171,7 @@ nv.models.multiBarChart = function() {
 
     selection.each(function(data) {
 
+      state.set = stateSetter(data);
       state.get = stateGetter(data);
       state.update();
 
@@ -4228,8 +4252,8 @@ nv.models.multiBarChart = function() {
 
       if (showControls) {
         var controlsData = [
-          { key: 'Grouped', disabled: multibar.stacked() },
-          { key: 'Stacked', disabled: !multibar.stacked() }
+          { key: 'Grouped', disabled: stacked },
+          { key: 'Stacked', disabled: !stacked }
         ];
 
         controls.width(controlWidth()).color(['#444', '#444', '#444']);
@@ -4253,6 +4277,7 @@ nv.models.multiBarChart = function() {
       // Main Chart Component(s)
 
       multibar
+        .stacked(stacked)
         .disabled(data.map(function(series) { return series.disabled }))
         .width(availableWidth)
         .height(availableHeight)
@@ -4414,19 +4439,6 @@ nv.models.multiBarChart = function() {
         chart.update();
       });
       // END DEPRECATED
-
-      state.dispatch.on('set', function(e){
-        if (e.active !== undefined)
-          data.forEach(function(series,i) {
-            series.disabled = !e.active[i];
-          });
-
-        if (e.stacked !== undefined)
-          multibar.stacked(e.stacked);
-
-        chart.update();
-
-      });
 
       //============================================================
 
