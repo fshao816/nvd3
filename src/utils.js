@@ -219,18 +219,30 @@ nv.utils.state = function(){
   if (!(this instanceof nv.utils.state))
     return new nv.utils.state();
   var state = {};
+  var _self = this;
+  var _setState = function(){ return;};
+  var _getState = function(){ return {};};
+
   init = null;
 
   this.dispatch = d3.dispatch('change', 'set');
 
-  // This function needs to be overridden
-  // by model-specific state-getter
-  this.get = function(){
-    return {};
+  this.dispatch.on('set', function(state){
+    _setState(state, true);
+  });
+
+  this.getter = function(fn){
+    _getState = fn;
+    return this;
   }
 
-  this.set = function(state){
-    return;
+  this.setter = function(fn, callback) {
+    if (!callback) callback = function(){};
+    _setState = function(state, update){
+      fn(state);
+      if (update) callback();
+    }
+    return this;
   }
 
   this.init = function(state){
@@ -238,7 +250,7 @@ nv.utils.state = function(){
   }
 
   var _set = function(){
-    var settings = this.get();
+    var settings = _getState();
     if (JSON.stringify(settings) === JSON.stringify(state))
       return false;
     for (var key in settings) {
@@ -251,7 +263,7 @@ nv.utils.state = function(){
 
   this.update = function(){
     if (init) {
-      this.set(init);
+      _setState(init, false);
       init = null;
     }
     if (_set.call(this))

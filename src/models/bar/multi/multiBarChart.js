@@ -103,10 +103,6 @@ nv.models.multiBarChart = function() {
 
     selection.each(function(data) {
 
-      state.set = stateSetter(data);
-      state.get = stateGetter(data);
-      state.update();
-
       canvas.setRoot(this);
       if (canvas.noData(data))
           return chart;
@@ -124,6 +120,11 @@ nv.models.multiBarChart = function() {
             .call(chart);
       };
       chart.container = this;
+
+      state
+        .setter(stateSetter(data), chart.update)
+        .getter(stateGetter(data))
+        .update();
 
       // DEPRECATED set state.disabled
       state.disabled = data.map(function(d) { return !!d.disabled });
@@ -335,19 +336,6 @@ nv.models.multiBarChart = function() {
 
       dispatch.on('tooltipShow', function(e) {
         if (tooltips) showTooltip(e, that.parentNode)
-      });
-
-      state.dispatch.on('set', function(e){
-        if (e.stacked !== undefined) {
-          multibar.stacked(e.stacked);
-          stacked = e.stacked;
-        }
-        if (e.active !== undefined) {
-          data.forEach(function(series, i){
-            series.disabled = !e.active[i];
-          });
-        }
-        chart.update();
       });
 
       // DEPRECATED
