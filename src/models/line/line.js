@@ -9,6 +9,8 @@ nv.models.line = function() {
 
   var canvas = new Canvas({
         margin: {top: 0, right: 0, bottom: 0, left: 0}
+          , width: 960
+          , height: 500
           , chartClass: 'line'
       })
     , color = nv.utils.defaultColor() // a function that returns a color
@@ -191,10 +193,10 @@ nv.models.line = function() {
 
   chart.margin = function(_) {
     if (!arguments.length) return canvas.margin;
-    canvas.margin.top    = typeof _.top    != 'undefined' ? _.top    : canvas.margin.top;
-    canvas.margin.right  = typeof _.right  != 'undefined' ? _.right  : canvas.margin.right;
-    canvas.margin.bottom = typeof _.bottom != 'undefined' ? _.bottom : canvas.margin.bottom;
-    canvas.margin.left   = typeof _.left   != 'undefined' ? _.left   : canvas.margin.left;
+      canvas.margin.top    = nv.utils.valueOrDefault(_.top, canvas.margin.top);
+      canvas.margin.right  = nv.utils.valueOrDefault(_.right, canvas.margin.right);
+      canvas.margin.bottom = nv.utils.valueOrDefault(_.bottom, canvas.margin.bottom);
+      canvas.margin.left   = nv.utils.valueOrDefault(_.left, canvas.margin.left);
     return chart;
   };
 
