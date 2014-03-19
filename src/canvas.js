@@ -29,10 +29,13 @@ Canvas.prototype.render = function(selection) {
         this.selection = selection;
     }
 
+    console.log(this.selection);
+
     var canvas_ = this;
 
     this.renderWatch.reset();
     this.selection.each(function(data) {
+
         canvas_.setRoot(this);
         canvas_.wrapChart(data);
 
