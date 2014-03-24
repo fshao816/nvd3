@@ -59,13 +59,18 @@ text {
 </div>
 
 <script src="../lib/d3.v3.js"></script>
-<script src="../nv.d3.js"></script>
+
+<script src="../src/core.js"></script>
+<script src="../src/utils.js"></script>
 <script src="../src/canvas.js"></script>
 <script src="../src/tooltip.js"></script>
+
 <script src="../src/models/legend.js"></script>
+
 <script src="../src/models/pie/pie.js"></script>
 <script src="../src/models/pie/pieChart.js"></script>
-<script src="../src/utils.js"></script>
+<script src="../src/models/pie/donut.js"></script>
+
 <script>
 
 var testdata = [
@@ -142,12 +147,11 @@ nv.addGraph(function() {
     var width = 500,
         height = 500;
 
-    var chart = nv.models.pieChart()
+    var chart = nv.models.donutChart()
         .x(function(d) { return d.key })
         .color(d3.scale.category10().range())
         .width(width)
-        .height(height)
-        .donut(true);
+        .height(height);
 
     chart.pie
         .startAngle(function(d) { return d.startAngle/2 -Math.PI/2 })
@@ -155,7 +159,7 @@ nv.addGraph(function() {
 
       d3.select("#test2 svg")
           .datum(testdata)
-        .transition().duration(1200)
+        // .transition().duration(1200)
           .attr('width', width)
           .attr('height', height)
           .call(chart);
@@ -165,15 +169,15 @@ nv.addGraph(function() {
 });
 
 defaultChart("test1", testdata);
-defaultChart("test3", thirtySeries());
-defaultChart("test4",[]);
-defaultChart("test5",[{key: "Zero series", y: 0}, {key: "Zero series 2", y: 0}]);
-defaultChart("test6", [
-      {key: "Undefined", y: undefined},
-      {key: "Nan", y: NaN},
-      {key: "null", y: null},
-      {key: "zero", y: 0}
-  ])
+// defaultChart("test3", thirtySeries());
+// defaultChart("test4",[]);
+// defaultChart("test5",[{key: "Zero series", y: 0}, {key: "Zero series 2", y: 0}]);
+// defaultChart("test6", [
+//       {key: "Undefined", y: undefined},
+//       {key: "Nan", y: NaN},
+//       {key: "null", y: null},
+//       {key: "zero", y: 0}
+//   ])
 
-defaultChart("test7",testdata, "percent");
+// defaultChart("test7",testdata, "percent");
 </script>

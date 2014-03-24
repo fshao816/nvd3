@@ -1,45 +1,57 @@
+/**
+ * A Pie Chart draws a percentage data set, in a circular display.
+ */
 function PieChart(options){
-    options = nv.utils.valueOrDefault(options, {
+    options = nv.utils.extend({}, options, {
         margin: {top: 30, right: 20, bottom: 20, left: 20},
+        chartClass: 'pieChart',
+        wrapClass: 'pieChartWrap'
     });
 
-    options.chartClass = 'pieChart';
-    options.wrapClass = 'pieWrap';
-
     Chart.call(this, options);
-    this.pie = nv.models.pie();
-
-    this.state = {};
-    this.defaultState = null;
+    this.pie = this.getPie();
+    this.pie.showLabels(false);
 }
+nv.utils.create(PieChart, Chart, {});
 
-PieChart.prototype = Object.create(Chart.prototype);
-PieChart.prototype.wrapChart = function(data){
-    if(this.noData(data)){ return; }
+PieChart.prototype.getPie = function(){
+    return nv.models.pie();
+};
 
-    Chart.prototype.wrapChart.call(this, data);
-
+/**
+ * @override Layer::draw
+ */
+PieChart.prototype.draw = function(data){
     this.pie
       .width(this.available.width)
       .height(this.available.height);
 
-    var pieWrap = this.g.select('.nv-pieWrap').datum(data);
-    d3.transition(pieWrap).call(this.pie);
-}
+    var pieChartWrap = this.g.select('.nv-pieChartWrap').datum(data);
+    d3.transition(pieChartWrap).call(this.pie);
+};
 
-PieChart.prototype.onDispatches = function(){
-    Chart.prototype.onDispatches.call(this);
+/**
+ * Set up listeners for dispatches fired on the underlying
+ * pie graph.
+ *
+ * @override PieChart::onDispatches
+ */
+PieChart.prototype.attachEvents = function(){
+    Chart.prototype.attachEvents.call(this);
 
     this.pie.dispatch.on('elementMouseout.tooltip', function(e) {
       this.dispatch.tooltipHide(e);
     }.bind(this));
 
     this.pie.dispatch.on('elementMouseover.tooltip', function(e) {
-      e.pos = [e.pos[0] +  this.margin.left, e.pos[1] + this.margin.top];
+      e.pos = [e.pos[0] +  this.margin().left, e.pos[1] + this.margin().top];
       this.dispatch.tooltipShow(e);
     }.bind(this));
 }
 
+/**
+ * Set the underlying color, on both the chart, and the composites.
+ */
 PieChart.prototype.color = function(_){
     if (!arguments.length) return this.color;
     this.color = nv.utils.getColor(_);
@@ -48,6 +60,9 @@ PieChart.prototype.color = function(_){
     return this;
 };
 
+/**
+ * Calculate where to show the tooltip on a pie chart.
+ */
 PieChart.prototype.showTooltip = function(e, offsetElement) {
     var tooltipLabel = this.pie.description()(e.point) || this.pie.x()(e.point)
     var left = e.pos[0] + ( (offsetElement && offsetElement.offsetLeft) || 0 ),
@@ -58,6 +73,9 @@ PieChart.prototype.showTooltip = function(e, offsetElement) {
     nv.tooltip.show([left, top], content, e.value < 0 ? 'n' : 's', null, offsetElement);
 };
 
+/**
+ * The PieChart model retuns a function wrapping an instance of a PieChart.
+ */
 nv.models.pieChart = function() {
   "use strict";
 
@@ -68,11 +86,6 @@ nv.models.pieChart = function() {
     return chart;
   }
 
-  // d3.select('#pies').data(set).call(nv.models.pieChart().setter(val))
-
-  //============================================================
-  // Expose Public Variables
-  //------------------------------------------------------------
   chart.legend = pieChart.legend;
   chart.dispatch = pieChart.dispatch;
   chart.pie = pieChart.pie;
@@ -95,9 +108,11 @@ nv.models.pieChart = function() {
   ].forEach(function(method){
     chart[method] = function(arg1){
       var ret = null;
+      // Minor perf win for the 0, 1 arg versions
+      // http://jsperf.com/test-call-vs-apply/34
       switch (arguments.length) {
         case 0:
-           ret = PieChart.prototype[method].call(pieChart); break;
+          ret = PieChart.prototype[method].call(pieChart); break;
         case 1:
           ret = PieChart.prototype[method].call(pieChart, arg1); break;
         default:
