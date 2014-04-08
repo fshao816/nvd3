@@ -2392,10 +2392,10 @@ nv.models.discreteBar = function() {
 
   function chart(selection) {
     selection.each(function(data) {
-        
+
       var dataLength = data.length,
           barClass = 'nv-bar';
-        
+
       canvas.setRoot(this);
       canvas.wrapChart(data);
       canvas.gEnter.append('g').attr('class', 'nv-groups');
@@ -2480,18 +2480,18 @@ nv.models.discreteBar = function() {
           })
           .on('mouseover', function(d, i) { //TODO: figure out why j works above, but not here
             d3.select(this).classed('hover', true);
-            dispatch.elementMouseover( _mouseEventObject(arguments) );
+            dispatch.elementMouseover( _mouseEventObject(d, i) );
           })
           .on('mouseout', function(d, i) {
             d3.select(this).classed('hover', false);
-            dispatch.elementMouseout( _mouseEventObject(arguments) );
+            dispatch.elementMouseout( _mouseEventObject(d, i) );
           })
           .on('click', function(d, i) {
-            dispatch.elementClick( _mouseEventObject(arguments) );
+            dispatch.elementClick( _mouseEventObject(d, i) );
             d3.event.stopPropagation();
           })
           .on('dblclick', function(d, i) {
-            dispatch.elementDblClick( _mouseEventObject(arguments) );
+            dispatch.elementDblClick( _mouseEventObject(d, i) );
             d3.event.stopPropagation();
           });
 
