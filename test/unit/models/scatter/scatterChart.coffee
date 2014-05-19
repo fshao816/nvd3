@@ -26,6 +26,9 @@ apiTest.config.scatterChart =
         'noData'
         'duration'
     ]
+    overrides: [
+        'size'
+    ]
     submodels:
         scatter: nv.models.scatter
         legend: nv.models.legend
@@ -69,4 +72,4 @@ apiTest.config.scatterChart =
         'renderEnd'
     ]
 
-apiTest.run 'scatterChart'
+apiTest.run.only 'scatterChart'
